@@ -1,0 +1,29 @@
+﻿# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+
+# Virtual envs
+.venv/
+venv/
+
+# Streamlit
+.streamlit/secrets.toml
+.streamlit/*.json
+
+# Env & secrets
+.env
+.env.*
+*.key
+*.pem
+
+# VS Code
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db

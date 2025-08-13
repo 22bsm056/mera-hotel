@@ -1,0 +1,110 @@
+2025-06-25 15:58:18,177 - integrations.ai_client - INFO - Gemini AI Client initialized successfully with model: 'gemini-1.5-flash'.
+2025-06-25 15:58:18,177 - integrations.instagram_client - INFO - InstagramClient initialized successfully
+2025-06-25 15:58:18,177 - integrations.ai_client - INFO - Gemini AI Client initialized successfully with model: 'gemini-1.5-flash'.
+2025-06-25 15:58:18,178 - integrations.instagram_client - INFO - InstagramClient initialized successfully
+2025-06-25 15:58:22,213 - integrations.ai_client - INFO - Detected intent: booking
+2025-06-25 15:58:23,201 - integrations.ai_client - INFO - Detected intent: greeting
+2025-06-25 15:58:23,992 - integrations.ai_client - INFO - Detected intent: inquiry
+2025-06-25 15:58:24,954 - integrations.ai_client - INFO - Detected intent: reschedule
+2025-06-25 15:58:25,774 - integrations.ai_client - INFO - Detected intent: cancel
+2025-06-25 15:58:28,245 - integrations.ai_client - INFO - Detected intent: greeting
+2025-06-25 15:58:28,245 - agents.hotel_agent - INFO - Processing message from test_user_123: intent=greeting
+2025-06-25 15:58:29,269 - integrations.ai_client - INFO - Detected intent: inquiry
+2025-06-25 15:58:29,270 - agents.hotel_agent - INFO - Processing message from test_user_123: intent=inquiry
+2025-06-25 15:58:30,293 - integrations.ai_client - INFO - Detected intent: inquiry
+2025-06-25 15:58:30,293 - agents.hotel_agent - INFO - Processing message from test_user_123: intent=inquiry
+2025-06-25 15:58:31,112 - integrations.ai_client - INFO - Detected intent: inquiry
+2025-06-25 15:58:31,112 - agents.hotel_agent - INFO - Processing message from test_user_123: intent=inquiry
+2025-06-25 15:58:32,138 - integrations.ai_client - INFO - Detected intent: booking
+2025-06-25 15:58:32,138 - agents.hotel_agent - INFO - Processing message from test_user_123: intent=booking
+2025-06-25 15:58:33,372 - integrations.ai_client - INFO - Detected intent: booking
+2025-06-25 15:58:33,372 - agents.hotel_agent - INFO - Processing message from test_user_123: intent=booking
+2025-06-25 15:58:34,800 - agents.hotel_agent - INFO - Extracted booking info: {'check_in_date': '2025-07-02', 'check_out_date': '2025-07-05', 'room_type': 'standard', 'num_guests': 2, 'guest_name': 'Test User', 'guest_email': 'test@example.com', 'guest_phone': '555-0123'}
+2025-06-25 15:58:36,271 - integrations.instagram_client - INFO - Parsed text message from test_sender_123
+2025-06-25 15:58:37,257 - integrations.ai_client - INFO - Detected intent: greeting
+2025-06-25 15:58:37,257 - agents.hotel_agent - INFO - Processing message from integration_test_user: intent=greeting
+2025-06-25 15:58:38,106 - integrations.ai_client - INFO - Detected intent: inquiry
+2025-06-25 15:58:38,106 - agents.hotel_agent - INFO - Processing message from integration_test_user: intent=inquiry
+2025-06-25 15:58:38,824 - integrations.ai_client - ERROR - Error querying Gemini: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. [violations {
+  quota_metric: "generativelanguage.googleapis.com/generate_content_free_tier_requests"
+  quota_id: "GenerateRequestsPerMinutePerProjectPerModel-FreeTier"
+  quota_dimensions {
+    key: "model"
+    value: "gemini-1.5-flash"
+  }
+  quota_dimensions {
+    key: "location"
+    value: "global"
+  }
+  quota_value: 15
+}
+, links {
+  description: "Learn more about Gemini API quotas"
+  url: "https://ai.google.dev/gemini-api/docs/rate-limits"
+}
+, retry_delay {
+  seconds: 21
+}
+] for prompt: 'Analyze this message and determine the user's intent. Respond with ONLY one of these exact words:
+
+I...'
+2025-06-25 15:58:38,824 - integrations.ai_client - WARNING - Unknown intent detected: 'i'm having trouble processing your request right now. please try again later.'. Defaulting to 'inquiry'.
+2025-06-25 15:58:38,824 - agents.hotel_agent - INFO - Processing message from integration_test_user: intent=inquiry
+2025-06-25 15:58:39,934 - integrations.ai_client - INFO - Detected intent: booking
+2025-06-25 15:58:39,935 - agents.hotel_agent - INFO - Processing message from integration_test_user: intent=booking
+2025-08-13 18:44:34,317 - integrations.ai_client - INFO - Gemini AI Client initialized successfully with model: 'gemini-1.5-flash'.
+2025-08-13 18:44:34,317 - integrations.instagram_client - INFO - InstagramClient initialized successfully
+2025-08-13 18:44:34,329 - integrations.ai_client - INFO - Gemini AI Client initialized successfully with model: 'gemini-1.5-flash'.
+2025-08-13 18:44:34,329 - integrations.instagram_client - INFO - InstagramClient initialized successfully
+2025-08-13 18:44:35,732 - integrations.ai_client - INFO - Detected intent: booking
+2025-08-13 18:44:36,973 - integrations.ai_client - INFO - Detected intent: greeting
+2025-08-13 18:44:37,522 - integrations.ai_client - INFO - Detected intent: inquiry
+2025-08-13 18:44:38,750 - integrations.ai_client - INFO - Detected intent: reschedule
+2025-08-13 18:44:39,281 - integrations.ai_client - INFO - Detected intent: cancel
+2025-08-13 18:44:41,275 - integrations.ai_client - INFO - AI extracted booking info: {'check_in_date': '2024-12-25', 'check_out_date': '2024-12-28', 'room_type': 'deluxe', 'num_guests': 2, 'guest_name': 'John Doe', 'guest_email': 'john@example.com', 'guest_phone': '123-456-7890'}
+2025-08-13 18:44:41,900 - integrations.ai_client - INFO - Detected intent: greeting
+2025-08-13 18:44:41,900 - agents.hotel_agent - INFO - Processing message from test_user_123: intent=greeting
+2025-08-13 18:44:43,468 - integrations.ai_client - INFO - Detected intent: inquiry
+2025-08-13 18:44:43,468 - agents.hotel_agent - INFO - Processing message from test_user_123: intent=inquiry
+2025-08-13 18:44:43,978 - integrations.ai_client - INFO - Detected intent: inquiry
+2025-08-13 18:44:43,978 - agents.hotel_agent - INFO - Processing message from test_user_123: intent=inquiry
+2025-08-13 18:44:45,305 - integrations.ai_client - INFO - Detected intent: inquiry
+2025-08-13 18:44:45,305 - agents.hotel_agent - INFO - Processing message from test_user_123: intent=inquiry
+2025-08-13 18:44:45,820 - integrations.ai_client - INFO - Detected intent: booking
+2025-08-13 18:44:45,820 - agents.hotel_agent - INFO - Processing message from test_user_123: intent=booking
+2025-08-13 18:44:47,170 - integrations.ai_client - INFO - Detected intent: booking
+2025-08-13 18:44:47,170 - agents.hotel_agent - INFO - Processing message from test_user_123: intent=booking
+2025-08-13 18:44:48,379 - integrations.ai_client - INFO - AI extracted booking info: {'check_in_date': '2025-08-20', 'check_out_date': '2025-08-23', 'room_type': 'standard', 'num_guests': 2, 'guest_name': 'Test User', 'guest_email': 'test@example.com', 'guest_phone': '555-0123'}
+2025-08-13 18:44:48,379 - agents.hotel_agent - INFO - Extracted booking info: {'check_in_date': '2025-08-20', 'check_out_date': '2025-08-23', 'room_type': 'standard', 'num_guests': 2, 'guest_name': 'Test User', 'guest_email': 'test@example.com', 'guest_phone': '555-0123'}
+2025-08-13 18:44:49,039 - integrations.instagram_client - INFO - Parsed text message from test_sender_123
+2025-08-13 18:44:49,554 - integrations.ai_client - INFO - Detected intent: greeting
+2025-08-13 18:44:49,554 - agents.hotel_agent - INFO - Processing message from integration_test_user: intent=greeting
+2025-08-13 18:44:50,869 - integrations.ai_client - INFO - Detected intent: inquiry
+2025-08-13 18:44:50,869 - agents.hotel_agent - INFO - Processing message from integration_test_user: intent=inquiry
+2025-08-13 18:44:51,159 - integrations.ai_client - ERROR - Error querying Gemini: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. [violations {
+  quota_metric: "generativelanguage.googleapis.com/generate_content_free_tier_requests"
+  quota_id: "GenerateRequestsPerMinutePerProjectPerModel-FreeTier"
+  quota_dimensions {
+    key: "model"
+    value: "gemini-1.5-flash"
+  }
+  quota_dimensions {
+    key: "location"
+    value: "global"
+  }
+  quota_value: 15
+}
+, links {
+  description: "Learn more about Gemini API quotas"
+  url: "https://ai.google.dev/gemini-api/docs/rate-limits"
+}
+, retry_delay {
+  seconds: 9
+}
+] for prompt: 'Analyze this message and determine the user's intent. Respond with ONLY one of these exact words:
+
+I...'
+2025-08-13 18:44:51,159 - integrations.ai_client - WARNING - Unknown intent detected: 'i'm having trouble processing your request right now. please try again later.'. Defaulting to 'inquiry'.
+2025-08-13 18:44:51,159 - agents.hotel_agent - INFO - Processing message from integration_test_user: intent=inquiry
+2025-08-13 18:44:52,642 - integrations.ai_client - INFO - Detected intent: booking
+2025-08-13 18:44:52,642 - agents.hotel_agent - INFO - Processing message from integration_test_user: intent=booking

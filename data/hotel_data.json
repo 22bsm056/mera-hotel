@@ -1,0 +1,84 @@
+{
+  "hotel": {
+    "name": "Grand Palace Hotel",
+    "address": "123 Luxury Street, City Center",
+    "phone": "+1-555-0123",
+    "email": "reservations@grandpalace.com",
+    "website": "www.grandpalace.com",
+    "check_in_time": "3:00 PM",
+    "check_out_time": "11:00 AM",
+    "description": "A luxury hotel in the heart of the city with world-class amenities and service."
+  },
+  "room_types": {
+    "standard": {
+      "name": "Standard Room",
+      "price": 150,
+      "capacity": 2,
+      "size": "300 sq ft",
+      "description": "Comfortable standard room with city view, queen bed, and modern amenities",
+      "amenities": ["Free WiFi", "Air Conditioning", "TV", "Mini Fridge", "Coffee Maker"]
+    },
+    "deluxe": {
+      "name": "Deluxe Room",
+      "price": 220,
+      "capacity": 3,
+      "size": "400 sq ft", 
+      "description": "Spacious deluxe room with premium amenities and partial city view",
+      "amenities": ["Free WiFi", "Air Conditioning", "Smart TV", "Mini Bar", "Coffee Maker", "Bathrobe", "Room Service"]
+    },
+    "suite": {
+      "name": "Executive Suite",
+      "price": 350,
+      "capacity": 4,
+      "size": "600 sq ft",
+      "description": "Luxury suite with separate living area, bedroom, and panoramic city view",
+      "amenities": ["Free WiFi", "Air Conditioning", "Smart TV", "Full Mini Bar", "Coffee Machine", "Bathrobe", "Room Service", "Butler Service", "Living Room"]
+    }
+  },
+  "amenities": [
+    "Free WiFi",
+    "Swimming Pool",
+    "Fitness Center",
+    "Spa & Wellness Center",
+    "Restaurant",
+    "Bar & Lounge",
+    "Room Service (24/7)",
+    "Concierge Service",
+    "Valet Parking",
+    "Business Center",
+    "Meeting Rooms",
+    "Laundry Service",
+    "Airport Shuttle"
+  ],
+  "services": {
+    "restaurant": {
+      "name": "The Grand Dining",
+      "hours": "6:00 AM - 11:00 PM",
+      "cuisine": "International & Local",
+      "description": "Fine dining restaurant featuring international cuisine and local specialties"
+    },
+    "spa": {
+      "name": "Serenity Spa",
+      "hours": "9:00 AM - 9:00 PM",
+      "services": ["Massage", "Facial", "Body Treatments", "Sauna", "Steam Room"],
+      "description": "Full-service spa offering relaxation and rejuvenation treatments"
+    },
+    "pool": {
+      "name": "Rooftop Pool",
+      "hours": "6:00 AM - 10:00 PM",
+      "description": "Outdoor rooftop pool with city views and poolside service"
+    },
+    "gym": {
+      "name": "Fitness Center",
+      "hours": "24/7",
+      "description": "Modern fitness center with cardio and weight training equipment"
+    }
+  },
+  "policies": {
+    "cancellation": "Free cancellation up to 24 hours before check-in",
+    "pets": "Pet-friendly hotel with additional fee",
+    "smoking": "Non-smoking hotel",
+    "age_requirement": "Guests must be 18+ to check in",
+    "payment": "All major credit cards accepted"
+  }
+}

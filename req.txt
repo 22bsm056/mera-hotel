@@ -1,0 +1,24 @@
+fastapi==0.109.1
+uvicorn==0.27.0
+python-dotenv==1.0.0
+langchain==0.1.11
+langgraph==0.0.19
+google-generativeai==0.3.2
+requests==2.31.0
+#sqlite3==2.6.0  # Usually comes with Python
+huggingface-hub==0.20.3
+#langchain-huggingface==0.0.4
+python-dateutil==2.8.2
+pydantic==2.6.1
+fastapi==0.109.1
+uvicorn==0.27.0
+python-dotenv==1.0.0
+langchain==0.1.11
+huggingface-hub==0.20.3
+google-generativeai==0.3.2
+requests==2.31.0
+python-dateutil==2.8.2
+pydantic==2.6.1
+python-multipart==0.0.6
+transformers==4.40.1
+sentence-transformers==2.7.0
