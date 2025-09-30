@@ -24,7 +24,7 @@ class AIClient:
         
         try:
             genai.configure(api_key=self.api_token)
-            self.model = genai.GenerativeModel('gemini-1.5-flash')
+            self.model = genai.GenerativeModel('gemini-2.5-flash')
             logger.info(f"Gemini AI Client initialized successfully with model: 'gemini-1.5-flash'.")
 
         except Exception as e:
