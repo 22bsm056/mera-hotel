@@ -23,13 +23,116 @@ class AIClient:
             raise ValueError("GEMINI_API_KEY not found in environment variables")
         
         try:
+            # Configure API key
             genai.configure(api_key=self.api_token)
+
+            # Create model handle (keeps the same pattern as before)
             self.model = genai.GenerativeModel('gemini-2.5-flash')
-            logger.info(f"Gemini AI Client initialized successfully with model: 'gemini-1.5-flash'.")
+            logger.info("Gemini AI Client initialized successfully with model: 'gemini-2.5-flash'.")
 
         except Exception as e:
             logger.error(f"Failed to initialize Gemini client: {str(e)}")
             raise
+
+    def _parse_model_response_text(self, response) -> Optional[str]:
+        """
+        Robustly extract text from different Gemini response shapes.
+        Tries multiple access patterns:
+          1) response.text (quick accessor) if available and safe
+          2) response.result.parts (join textual parts)
+          3) response.result.candidates[*].content.parts (join parts)
+          4) tries to stringify the full response as fallback
+        Returns None if no usable text found.
+        """
+        try:
+            # 1) Quick accessor (works for simple text responses)
+            if hasattr(response, "text"):
+                try:
+                    txt = response.text
+                    if txt:
+                        return txt.strip()
+                except Exception:
+                    # the quick accessor itself can raise for complex responses
+                    pass
+
+            # 2) result.parts (common structure)
+            result = getattr(response, "result", None)
+            if result is not None:
+                parts = getattr(result, "parts", None)
+                if parts:
+                    collected = []
+                    for p in parts:
+                        # parts can be dict-like or objects
+                        if isinstance(p, dict):
+                            # try multiple keys that might contain text
+                            for key in ("text", "content", "payload"):
+                                if key in p and isinstance(p[key], str) and p[key].strip():
+                                    collected.append(p[key].strip())
+                                    break
+                        else:
+                            # object with attributes
+                            txt = getattr(p, "text", None) or getattr(p, "content", None)
+                            if isinstance(txt, str) and txt.strip():
+                                collected.append(txt.strip())
+                    if collected:
+                        return "\n".join(collected).strip()
+
+                # 3) result.candidates -> content -> parts (another documented shape)
+                candidates = getattr(result, "candidates", None)
+                if candidates:
+                    # iterate candidates to find text
+                    for cand in candidates:
+                        # cand may be dict-like or object
+                        cand_obj = cand
+                        if isinstance(cand, dict):
+                            content = cand.get("content")
+                        else:
+                            content = getattr(cand, "content", None)
+                        if not content:
+                            continue
+
+                        # content may have parts
+                        parts = None
+                        if isinstance(content, dict):
+                            parts = content.get("parts")
+                        else:
+                            parts = getattr(content, "parts", None)
+                        if parts:
+                            collected = []
+                            for p in parts:
+                                if isinstance(p, dict):
+                                    for key in ("text", "content", "payload"):
+                                        if key in p and isinstance(p[key], str) and p[key].strip():
+                                            collected.append(p[key].strip())
+                                            break
+                                else:
+                                    txt = getattr(p, "text", None) or getattr(p, "content", None)
+                                    if isinstance(txt, str) and txt.strip():
+                                        collected.append(txt.strip())
+                            if collected:
+                                return "\n".join(collected).strip()
+                        
+                        # sometimes candidate.content is a list of parts directly
+                        if isinstance(content, list):
+                            collected = []
+                            for p in content:
+                                if isinstance(p, str):
+                                    collected.append(p.strip())
+                            if collected:
+                                return "\n".join(collected).strip()
+
+            # 4) As a last resort try stringifying
+            try:
+                s = str(response)
+                if s and len(s) > 0:
+                    return s.strip()
+            except Exception:
+                pass
+
+        except Exception as e:
+            logger.debug(f"Error while parsing model response: {e}")
+        
+        return None
 
     def _query(self, prompt: str, max_tokens: Optional[int] = None) -> str:
         try:
@@ -39,15 +142,19 @@ class AIClient:
                 temperature=self.temperature
             )
             
+            # call the model
             response = self.model.generate_content(prompt, generation_config=generation_config)
             
-            if not response.text:
-                logger.warning("Received an empty response from the Gemini model.")
+            # robustly extract text
+            text = self._parse_model_response_text(response)
+            if not text:
+                logger.warning("Received an empty or unsupported response shape from the Gemini model.")
                 return "I'm having trouble processing your request right now. Please try again later."
             
-            return response.text.strip()
+            return text.strip()
         except Exception as e:
-            logger.error(f"Error querying Gemini: {str(e)} for prompt: '{prompt[:100]}...'")
+            # Log with some prompt context but avoid leaking full user data in logs
+            logger.error(f"Error querying Gemini: {str(e)} for prompt: '{(prompt[:100] + '...') if len(prompt) > 100 else prompt}'")
             return "I'm having trouble processing your request right now. Please try again later."
 
     def generate_response(self, prompt: str, context: Optional[Dict[str, Any]] = None) -> str:
@@ -86,15 +193,25 @@ Message: "{message}"
 
 Intent:"""
         
-        response = self._query(prompt, max_tokens=100).lower().strip()
+        response = self._query(prompt, max_tokens=100)
+        # normalize and try to robustly pick a valid intent even if model adds extra text
+        response_normalized = (response or "").lower()
         valid_intents = ['booking', 'reschedule', 'cancel', 'inquiry', 'greeting']
-        
-        if response in valid_intents:
-            logger.info(f"Detected intent: {response}")
-            return response
-        else:
-            logger.warning(f"Unknown intent detected: '{response}'. Defaulting to 'inquiry'.")
-            return 'inquiry'
+
+        # look for any of the valid intent words inside the model's response
+        for intent in valid_intents:
+            # exact word boundary match to reduce false positives
+            if re.search(r'\b' + re.escape(intent) + r'\b', response_normalized):
+                logger.info(f"Detected intent: {intent}")
+                return intent
+
+        # fallback: if response is exactly one of them
+        if response_normalized.strip() in valid_intents:
+            logger.info(f"Detected intent: {response_normalized.strip()}")
+            return response_normalized.strip()
+
+        logger.warning(f"Unknown intent detected: '{response_normalized}'. Defaulting to 'inquiry'.")
+        return 'inquiry'
 
     def extract_booking_info(self, message: str) -> Dict[str, Any]:
         """Extract booking information with fallback parsing"""
@@ -204,7 +321,6 @@ Return only valid JSON:"""
             data["guest_phone"] = phone_match.group()
         
         # Extract name (rough heuristic)
-        # Look for words that might be names (not in common booking terms)
         booking_terms = {"check", "in", "out", "room", "guest", "standard", "deluxe", "suite", 
                         "date", "night", "book", "reservation", "email", "phone", "number"}
         words = re.findall(r'\b[A-Za-z]+\b', message)
@@ -302,4 +418,4 @@ Include:
 
 Format as a clear, well-structured message."""
         
-        return self._query(prompt, max_tokens=400)
+        return self._query(prompt, max_tokens=1000)
