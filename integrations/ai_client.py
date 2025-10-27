@@ -12,91 +12,74 @@ logger = logging.getLogger(__name__)
 load_dotenv()
 
 class AIClient:
-    def __init__(self, max_tokens: int = 1000, temperature: float = 0.3):  # Increased tokens, lowered temperature
+    def __init__(self, max_tokens: int = 1000, temperature: float = 0.3):
         self.api_token = os.getenv("GEMINI_API_KEY")
         self.max_tokens = max_tokens
         self.temperature = temperature
 
         if not self.api_token:
-            logger.error("GEMINI_API_KEY not found in environment variables. "
-                         "Please ensure it's set in your .env file or system environment.")
+            logger.error("GEMINI_API_KEY not found in environment variables. Please ensure it's set.")
             raise ValueError("GEMINI_API_KEY not found in environment variables")
         
         try:
-            # Configure API key
             genai.configure(api_key=self.api_token)
-
-            # Create model handle (keeps the same pattern as before)
+            # Keep the model selection you used previously (change if needed)
             self.model = genai.GenerativeModel('gemini-2.5-flash')
             logger.info("Gemini AI Client initialized successfully with model: 'gemini-2.5-flash'.")
-
         except Exception as e:
-            logger.error(f"Failed to initialize Gemini client: {str(e)}")
+            logger.error(f"Failed to initialize Gemini client: {e}")
             raise
 
     def _parse_model_response_text(self, response) -> Optional[str]:
         """
-        Robustly extract text from different Gemini response shapes.
-        Tries multiple access patterns:
-          1) response.text (quick accessor) if available and safe
-          2) response.result.parts (join textual parts)
-          3) response.result.candidates[*].content.parts (join parts)
-          4) tries to stringify the full response as fallback
-        Returns None if no usable text found.
+        Robust text extraction from possible Gemini response shapes.
+        Tries: response.text, response.result.parts, result.candidates[*].content.parts,
+        then falls back to str(response).
         """
         try:
-            # 1) Quick accessor (works for simple text responses)
+            # 1) Quick accessor (may raise for non-simple responses)
             if hasattr(response, "text"):
                 try:
                     txt = response.text
-                    if txt:
+                    if isinstance(txt, str) and txt.strip():
                         return txt.strip()
                 except Exception:
-                    # the quick accessor itself can raise for complex responses
                     pass
 
-            # 2) result.parts (common structure)
+            # 2) result.parts
             result = getattr(response, "result", None)
             if result is not None:
                 parts = getattr(result, "parts", None)
                 if parts:
                     collected = []
                     for p in parts:
-                        # parts can be dict-like or objects
                         if isinstance(p, dict):
-                            # try multiple keys that might contain text
+                            # common keys
                             for key in ("text", "content", "payload"):
                                 if key in p and isinstance(p[key], str) and p[key].strip():
                                     collected.append(p[key].strip())
                                     break
                         else:
-                            # object with attributes
                             txt = getattr(p, "text", None) or getattr(p, "content", None)
                             if isinstance(txt, str) and txt.strip():
                                 collected.append(txt.strip())
                     if collected:
                         return "\n".join(collected).strip()
 
-                # 3) result.candidates -> content -> parts (another documented shape)
+                # 3) result.candidates -> content -> parts
                 candidates = getattr(result, "candidates", None)
                 if candidates:
-                    # iterate candidates to find text
                     for cand in candidates:
-                        # cand may be dict-like or object
-                        cand_obj = cand
                         if isinstance(cand, dict):
                             content = cand.get("content")
                         else:
                             content = getattr(cand, "content", None)
+
                         if not content:
                             continue
 
-                        # content may have parts
-                        parts = None
-                        if isinstance(content, dict):
-                            parts = content.get("parts")
-                        else:
-                            parts = getattr(content, "parts", None)
+                        # content.parts
+                        parts = content.get("parts") if isinstance(content, dict) else getattr(content, "parts", None)
                         if parts:
                             collected = []
                             for p in parts:
@@ -111,27 +94,24 @@ class AIClient:
                                         collected.append(txt.strip())
                             if collected:
                                 return "\n".join(collected).strip()
-                        
-                        # sometimes candidate.content is a list of parts directly
+
+                        # sometimes content is a list of strings
                         if isinstance(content, list):
-                            collected = []
-                            for p in content:
-                                if isinstance(p, str):
-                                    collected.append(p.strip())
+                            collected = [c.strip() for c in content if isinstance(c, str) and c.strip()]
                             if collected:
                                 return "\n".join(collected).strip()
 
-            # 4) As a last resort try stringifying
+            # 4) fallback: string representation
             try:
                 s = str(response)
-                if s and len(s) > 0:
+                if s and s.strip():
                     return s.strip()
             except Exception:
                 pass
 
         except Exception as e:
             logger.debug(f"Error while parsing model response: {e}")
-        
+
         return None
 
     def _query(self, prompt: str, max_tokens: Optional[int] = None) -> str:
@@ -141,20 +121,17 @@ class AIClient:
                 max_output_tokens=tokens,
                 temperature=self.temperature
             )
-            
-            # call the model
+
             response = self.model.generate_content(prompt, generation_config=generation_config)
-            
-            # robustly extract text
+
             text = self._parse_model_response_text(response)
             if not text:
                 logger.warning("Received an empty or unsupported response shape from the Gemini model.")
                 return "I'm having trouble processing your request right now. Please try again later."
-            
+
             return text.strip()
         except Exception as e:
-            # Log with some prompt context but avoid leaking full user data in logs
-            logger.error(f"Error querying Gemini: {str(e)} for prompt: '{(prompt[:100] + '...') if len(prompt) > 100 else prompt}'")
+            logger.error(f"Error querying Gemini: {e} for prompt: '{(prompt[:120] + '...') if len(prompt) > 120 else prompt}'")
             return "I'm having trouble processing your request right now. Please try again later."
 
     def generate_response(self, prompt: str, context: Optional[Dict[str, Any]] = None) -> str:
@@ -180,6 +157,10 @@ Guidelines:
         return self._query(full_prompt, max_tokens=300)
 
     def extract_intent(self, message: str) -> str:
+        """
+        Exact-token intent detection: model must return exactly one of the valid tokens.
+        If not, default to 'inquiry' (same behavior as your original working code).
+        """
         prompt = f"""Analyze this message and determine the user's intent. Respond with ONLY one of these exact words:
 
 INTENTS:
@@ -194,35 +175,23 @@ Message: "{message}"
 Intent:"""
         
         response = self._query(prompt, max_tokens=100)
-        # normalize and try to robustly pick a valid intent even if model adds extra text
-        response_normalized = (response or "").lower()
+        # Keep the strict exact-match behavior you prefer:
+        response_normalized = (response or "").lower().strip()
         valid_intents = ['booking', 'reschedule', 'cancel', 'inquiry', 'greeting']
-
-        # look for any of the valid intent words inside the model's response
-        for intent in valid_intents:
-            # exact word boundary match to reduce false positives
-            if re.search(r'\b' + re.escape(intent) + r'\b', response_normalized):
-                logger.info(f"Detected intent: {intent}")
-                return intent
-
-        # fallback: if response is exactly one of them
-        if response_normalized.strip() in valid_intents:
-            logger.info(f"Detected intent: {response_normalized.strip()}")
-            return response_normalized.strip()
-
-        logger.warning(f"Unknown intent detected: '{response_normalized}'. Defaulting to 'inquiry'.")
-        return 'inquiry'
+        
+        if response_normalized in valid_intents:
+            logger.info(f"Detected intent: {response_normalized}")
+            return response_normalized
+        else:
+            logger.warning(f"Unknown intent detected: '{response_normalized}'. Defaulting to 'inquiry'.")
+            return 'inquiry'
 
     def extract_booking_info(self, message: str) -> Dict[str, Any]:
         """Extract booking information with fallback parsing"""
-        # First try AI extraction
         ai_result = self._extract_booking_info_ai(message)
-        
-        # If AI fails, use rule-based extraction
         if not any(ai_result.values()):
             logger.info("AI extraction failed, using rule-based extraction")
             return self._extract_booking_info_rules(message)
-        
         return ai_result
 
     def _extract_booking_info_ai(self, message: str) -> Dict[str, Any]:
@@ -243,38 +212,30 @@ Return only valid JSON:"""
         
         try:
             response = self._query(prompt, max_tokens=300)
-            
             # Clean the response
             response = response.replace("```json", "").replace("```", "").strip()
-            
-            # Try to extract JSON from response
+            # Extract JSON object
             json_match = re.search(r'\{.*\}', response, re.DOTALL)
             if json_match:
                 json_str = json_match.group()
                 data = json.loads(json_str)
-                
-                # Validate and normalize the structure
                 normalized_data = self._normalize_booking_data(data)
                 logger.info(f"AI extracted booking info: {normalized_data}")
                 return normalized_data
-            
         except json.JSONDecodeError as e:
-            logger.error(f"JSON decoding error: {str(e)}. Response: '{response}'")
+            logger.error(f"JSON decoding error: {e}. Response: '{response}'")
         except Exception as e:
-            logger.error(f"Error in AI extraction: {str(e)}")
-        
+            logger.error(f"Error in AI extraction: {e}")
         return self._get_empty_booking_data()
 
     def _extract_booking_info_rules(self, message: str) -> Dict[str, Any]:
-        """Rule-based extraction as fallback"""
         data = self._get_empty_booking_data()
         message_lower = message.lower()
         
-        # Extract dates
         date_patterns = [
-            r'(\d{4}-\d{1,2}-\d{1,2})',  # YYYY-MM-DD or YYYY-M-D
-            r'(\d{1,2}[/-]\d{1,2}[/-]\d{4})',  # MM/DD/YYYY or MM-DD-YYYY
-            r'(\d{1,2}\s+\w+\s+\d{4})'  # DD Month YYYY
+            r'(\d{4}-\d{1,2}-\d{1,2})',
+            r'(\d{1,2}[/-]\d{1,2}[/-]\d{4})',
+            r'(\d{1,2}\s+\w+\s+\d{4})'
         ]
         
         dates_found = []
@@ -282,7 +243,6 @@ Return only valid JSON:"""
             matches = re.findall(pattern, message)
             dates_found.extend(matches)
         
-        # Convert and assign dates
         normalized_dates = []
         for date_str in dates_found:
             normalized_date = self._normalize_date(date_str)
@@ -298,29 +258,24 @@ Return only valid JSON:"""
             elif "check out" in message_lower or "checkout" in message_lower:
                 data["check_out_date"] = normalized_dates[0]
         
-        # Extract room type
         room_types = ["standard", "deluxe", "suite"]
         for room_type in room_types:
             if room_type in message_lower:
                 data["room_type"] = room_type
                 break
         
-        # Extract number of guests
         guest_match = re.search(r'(\d+)\s*guest', message_lower)
         if guest_match:
             data["num_guests"] = int(guest_match.group(1))
         
-        # Extract email
         email_match = re.search(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b', message)
         if email_match:
             data["guest_email"] = email_match.group()
         
-        # Extract phone
         phone_match = re.search(r'\b\d{10,12}\b', message)
         if phone_match:
             data["guest_phone"] = phone_match.group()
         
-        # Extract name (rough heuristic)
         booking_terms = {"check", "in", "out", "room", "guest", "standard", "deluxe", "suite", 
                         "date", "night", "book", "reservation", "email", "phone", "number"}
         words = re.findall(r'\b[A-Za-z]+\b', message)
@@ -333,9 +288,7 @@ Return only valid JSON:"""
         return data
 
     def _normalize_date(self, date_str: str) -> Optional[str]:
-        """Normalize various date formats to YYYY-MM-DD"""
         try:
-            # Handle DD Month YYYY format
             month_map = {
                 'january': '01', 'jan': '01', 'february': '02', 'feb': '02',
                 'march': '03', 'mar': '03', 'april': '04', 'apr': '04',
@@ -353,12 +306,10 @@ Return only valid JSON:"""
                 if month:
                     return f"{year}-{month}-{day}"
             
-            # Handle YYYY-MM-DD format (normalize single digits)
             if re.match(r'\d{4}-\d{1,2}-\d{1,2}', date_str):
                 parts = date_str.split('-')
                 return f"{parts[0]}-{parts[1].zfill(2)}-{parts[2].zfill(2)}"
             
-            # Handle MM/DD/YYYY or MM-DD-YYYY format
             if re.match(r'\d{1,2}[/-]\d{1,2}[/-]\d{4}', date_str):
                 separator = '/' if '/' in date_str else '-'
                 parts = date_str.split(separator)
@@ -370,7 +321,6 @@ Return only valid JSON:"""
         return None
 
     def _normalize_booking_data(self, data: Dict[str, Any]) -> Dict[str, Any]:
-        """Normalize and validate booking data structure"""
         normalized = self._get_empty_booking_data()
         
         for key, value in data.items():
@@ -393,7 +343,6 @@ Return only valid JSON:"""
         return normalized
 
     def _get_empty_booking_data(self) -> Dict[str, Any]:
-        """Return empty booking data structure"""
         return {
             "check_in_date": None,
             "check_out_date": None,
